@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
   space::tools::read_command_line(argc, argv, sim_num, B_MIN, B_MAX, AJ, output_name);
 
   V_MEAN *= space::unit::kms;
-  V_DISPER = V_MEAN * sqrt(consts::pi / 8.0);
+  V_DISPER = V_MEAN * sqrt(space::consts::pi / 8.0);
   B_MIN *= space::unit::au;
   B_MAX *= space::unit::au;
   AJ *= space::unit::au;
