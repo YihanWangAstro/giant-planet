@@ -19,4 +19,4 @@ revision : $(OBJS) revision.o
 $(OBJS) : $(INCL)
 .PHONY : clean	
 clean:
-	-rm $(OBJS) *.o real_b uniform_b coplanner binary traj mono-phase multi-phase
+	-rm $(OBJS) *.o revision
