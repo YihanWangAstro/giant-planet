@@ -61,7 +61,7 @@ auto create_incident_M_star(Gen &gen, double v_dispersion, double b_max, double 
 
   double v_inf = randomGen::Maxwell<double>::get(gen, v_dispersion);
 
-  double b = randomGen::Uniform<double>::get(gen, 0, b_max);
+  double b = sqrt(randomGen::Uniform<double>::get(gen, 0, b_max * b_max));
 
   double w = randomGen::Uniform<double>::get(gen, 0, 2 * consts::pi);
 
