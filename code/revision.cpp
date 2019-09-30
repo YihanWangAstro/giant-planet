@@ -1,28 +1,56 @@
 #include "scattering.hpp"
 
-double V_MEAN{5};
-double V_DISPER{5};
-double B_MAX{100};
-double B_MIN{-100};
+// double V_DISPER{5};
+double V_INF{5};
+double M_DWARF{0.2};
 double AJ{1};
+constexpr double DELTA{1e-4};
+
 using namespace space::orbit;
 
 void mono_single(ConFile out_file, size_t sim_num) {
+  using namespace space;
   std::random_device rd;
   std::mt19937 local_thread_gen(rd());
-  double D = 500 * space::unit::au;
+
+  // randomGen::PowerLaw<double>::get(local_thread_gen, -1.3, 0.08, 0.45);
+  double m_dwarf = M_DWARF * space::unit::m_solar;
+
+  double v_inf = V_INF * space::unit::kms;  // V_RATIO * critical_velocity_of_1_plus_2(sun.mass, jupiter.mass, );
+
+  double a_j = AJ * space::unit::au;
+
+  double m_in = unit::m_solar + unit::m_jupiter;
+
+  double mu_in = (unit::m_solar * unit::m_jupiter) / m_in;
+
+  double u_out = space::consts::G * (m_dwarf + m_in);
+
+  double b_max = get_max_b(u_out, v_inf, 5 * a_j);
+
+  double start_r = a_j * pow(2 * m_dwarf / (DELTA * mu_in), 1.0 / 3);
 
   for (size_t i = 0; i < sim_num; i++) {
-    double b_var = space::randomGen::Uniform<double>::get(B_MIN, B_MAX);
+    Particle sun{unit::m_solar, unit::r_solar}, jupiter{unit::m_jupiter, unit::r_jupiter};
 
-    auto [sun, jupiter, jupiter_orbit] = create_1_planet_system(AJ, 0);
+    auto jupiter_orbit =
+        Kepler{unit::m_solar, unit::m_jupiter, semi_latus_rectum(a_j, 0.0), 0.0, 0.0, 0.0, ISOTHERMAL, 0.0};
 
-    auto [star, v_inf, b, w, incl, phi] = create_incident_M_star(local_thread_gen, V_MEAN, b_var, D);
+    move_particles_to(jupiter_orbit, jupiter);
+
+    double b = sqrt(randomGen::Uniform<double>::get(local_thread_gen, 0, b_max * b_max));
+
+    auto [incid_pos, incid_vel, w, incl, phi] = create_incident_M_star(local_thread_gen, u_out, v_inf, b, start_r);
+
+    Particle star{m_dwarf, pow(m_dwarf, 1.0 / 3) * unit::r_solar};
+
+    move_particles_to(incid_pos, incid_vel, star);
 
     move_to_com_coord(sun, jupiter);
+
     move_to_com_coord(sun, jupiter, star);
 
-    double end_time = get_duration(D, v_inf);
+    double end_time = 2 * time_to_pericenter(u_out, v_inf, b, start_r);
 
     spacex::SpaceXsim::RunArgs args;
 
@@ -45,12 +73,9 @@ int main(int argc, char **argv) {
 
   size_t sim_num;
 
-  space::tools::read_command_line(argc, argv, sim_num, B_MIN, B_MAX, AJ, output_name);
+  space::tools::read_command_line(argc, argv, sim_num, M_DWARF, V_INF, AJ, output_name);
 
-  V_MEAN *= space::unit::kms;
-  V_DISPER = V_MEAN * sqrt(space::consts::pi / 8.0);
-  B_MIN *= space::unit::au;
-  B_MAX *= space::unit::au;
+  V_INF *= space::unit::kms;
   AJ *= space::unit::au;
 
   std::string file_name = output_name + ".txt";

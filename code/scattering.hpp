@@ -22,26 +22,44 @@ auto collision = [](auto &ptc) -> bool {
   return false;
 };
 
-auto create_1_planet_system(double aj, double ej = 0) {
-  using namespace space::orbit;
-  using namespace space;
+inline double critical_velocity_of_1_plus_2(double m1, double m2, double m3, double a) {
+  double m_in = m1 + m2;
+  double mu_out = m_in * m3 / (m_in + m3);
 
-  Particle sun{unit::m_solar, unit::r_solar}, jupiter{unit::m_jupiter, unit::r_jupiter};
+  return sqrt(space::consts::G / mu_out * m1 * m2 / a);
+}
 
-  auto jupiter_orbit = Kepler{unit::m_solar, unit::m_jupiter, semi_latus_rectum(aj, ej), ej, 0.0, 0.0, ISOTHERMAL, 0.0};
-
-  move_particles_to(jupiter_orbit, jupiter);
-
-  return std::make_tuple(sun, jupiter, jupiter_orbit);
+double get_max_b(double u, double v_inf, double rp) {
+  double v2 = v_inf * v_inf;
+  double tmp = u / v2 + rp;
+  return sqrt(tmp * tmp - u * u / (v2 * v2));
 }
 
 template <typename Gen>
-auto create_incident_orbit(Gen &gen, double v_inf, double b, double D, double w, double i, double phi) {
+auto create_incident_orbit(Gen &gen, double u, double v_inf, double b, double w, double i, double phi, double start_r) {
   using namespace space;
 
-  Vector3d incid_pos{D, b * cos(phi), b * sin(phi)};
+  double a = -u / (v_inf * v_inf);
 
-  Vector3d incid_vel{-v_inf, 0, 0.0};
+  double e = sqrt(1 + b * b / (a * a));
+
+  double l = a * (1 - e * e);
+
+  double theta = acos((l - start_r) / (e * start_r));
+
+  double y = start_r * sin(theta);
+
+  double x = start_r * cos(theta);
+
+  double v_slope = (x + a * e) / y * b * b / (a * a);
+
+  double theta_v = atan(v_slope);
+
+  double v = sqrt(u * (2 / start_r - 1 / a));
+
+  Vector3d incid_pos{x, y * cos(phi), y * sin(phi)};
+
+  Vector3d incid_vel{v * cos(theta_v), v * sin(theta_v) * cos(phi), v * sin(theta_v) * sin(phi)};
 
   orbit::euler_rotate(incid_pos, w, i, 0.0);
 
@@ -50,18 +68,32 @@ auto create_incident_orbit(Gen &gen, double v_inf, double b, double D, double w,
   return std::make_tuple(incid_pos, incid_vel);
 }
 
+double time_to_pericenter(double u, double v_inf, double b, double start_r) {
+  double a = -u / (v_inf * v_inf);
+
+  double e = sqrt(1 + b * b / (a * a));
+
+  double l = a * (1 - e * e);
+
+  double theta = acos((l - start_r) / (e * start_r));
+
+  double cos_theta = cos(theta);
+
+  double cosh_F = (e + cos_theta) / (1 + e * cos_theta);
+
+  double F = acosh(cosh_F);
+
+  double M = e * sinh(F) - F;
+
+  double time_to_pericenter = sqrt(-a * a * a / u) * M;
+
+  return time_to_pericenter;
+}
+
 template <typename Gen>
-auto create_incident_M_star(Gen &gen, double v_dispersion, double b_max, double D) {
+auto create_incident_M_star(Gen &gen, double u, double v_inf, double b, double start_r) {
   using namespace space;
   using namespace space::orbit;
-
-  double m_star = randomGen::PowerLaw<double>::get(gen, -1.3, 0.08, 0.45);
-
-  Particle star{m_star, pow(m_star, 1.0 / 3) * unit::r_solar};
-
-  double v_inf = randomGen::Maxwell<double>::get(gen, v_dispersion);
-
-  double b = randomGen::Uniform<double>::get(gen, 0, b_max);
 
   double w = randomGen::Uniform<double>::get(gen, 0, 2 * consts::pi);
 
@@ -69,11 +101,9 @@ auto create_incident_M_star(Gen &gen, double v_dispersion, double b_max, double 
 
   double phi = randomGen::Uniform<double>::get(gen, 0, 2 * consts::pi);
 
-  auto [incid_pos, incid_vel] = create_incident_orbit(gen, v_inf, b, D, w, i, phi);
+  auto [incid_pos, incid_vel] = create_incident_orbit(gen, u, v_inf, b, w, i, phi, start_r);
 
-  move_particles_to(incid_pos, incid_vel, star);
-
-  return std::make_tuple(star, incid_vel.norm(), b, w, i, phi);
+  return std::make_tuple(incid_pos, incid_vel, w, i, phi);
 }
 
 double get_duration(double D, double v) { return D / v * 4; }
