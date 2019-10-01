@@ -2,19 +2,20 @@
 
 // double V_DISPER{5};
 double V_INF{5};
-double M_DWARF{0.2};
+// double M_DWARF{0.2};
 double AJ{1};
 constexpr double DELTA{1e-4};
 
 using namespace space::orbit;
 
-void mono_single(ConFile out_file, size_t sim_num) {
+void mono_single(std::string workdir, size_t idx, size_t sim_num, double m_dwarf) {
   using namespace space;
   std::random_device rd;
   std::mt19937 local_thread_gen(rd());
 
+  std::fstream out_file{workdir + "_" + std::to_string(idx) + ".txt", std::fstream::out};
   // randomGen::PowerLaw<double>::get(local_thread_gen, -1.3, 0.08, 0.45);
-  double m_dwarf = M_DWARF * space::unit::m_solar;
+  // double m_dwarf = M_DWARF * space::unit::m_solar;
 
   double v_inf = V_INF * space::unit::kms;  // V_RATIO * critical_velocity_of_1_plus_2(sun.mass, jupiter.mass, );
 
@@ -59,7 +60,9 @@ void mono_single(ConFile out_file, size_t sim_num) {
     args.add_stop_condition(end_time);
 
     args.add_stop_point_operation([&](auto &ptc) {
-      out_file << PACK(i, ' ', jupiter_orbit, ' ', v_inf, ' ', b, ' ', w, ' ', incl, ' ', phi, ' ', ptc, ' ', "\r\n");
+      // out_file << PACK(i, ' ', jupiter_orbit, ' ', v_inf, ' ', b, ' ', w, ' ', incl, ' ', phi, ' ', ptc, ' ',
+      // "\r\n");
+      space::display(out_file, i, jupiter_orbit, v_inf, b, w, incl, phi, ptc, "\r\n");
     });
 
     spacex::SpaceXsim simulator{0, sun, jupiter, star};
@@ -73,18 +76,38 @@ int main(int argc, char **argv) {
 
   size_t sim_num;
 
-  space::tools::read_command_line(argc, argv, sim_num, M_DWARF, V_INF, AJ, output_name);
+  space::tools::read_command_line(argc, argv, sim_num, V_INF, AJ, output_name);
 
   V_INF *= space::unit::kms;
   AJ *= space::unit::au;
 
-  std::string file_name = output_name + ".txt";
+  // std::string file_name = output_name + ".txt";
 
-  auto out_file = space::multiThread::make_thread_safe_fstream(file_name, std::fstream::out);
+  /*auto out_file = space::multiThread::make_thread_safe_fstream(file_name, std::fstream::out);
 
-  out_file << std::setprecision(6);
+  out_file << std::setprecision(6);*/
 
-  space::multiThread::auto_multi_thread(mono_single, out_file, sim_num);
+  size_t thread_num = 80;
+
+  double m_dwarf_min = 0.08 * space::unit::m_solar;
+
+  double m_dwarf_max = 0.45 * space::unit::m_solar;
+
+  double dm = (m_dwarf_max - m_dwarf_min) / thread_num;
+
+  double m_dwarf = m_dwarf_min;
+
+  std::vector<std::thread> threads;
+
+  for (size_t i = 0; i < thread_num; ++i) {
+    threads.emplace_back(std::thread{mono_single, output_name, i, sim_num, m_dwarf});
+    m_dwarf += dm;
+  }
+
+  for (auto &th : threads) {
+    th.join();
+  }
+  // space::multiThread::auto_multi_thread(mono_single, out_file, sim_num);
 
   return 0;
 }
