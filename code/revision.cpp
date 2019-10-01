@@ -78,9 +78,6 @@ int main(int argc, char **argv) {
 
   space::tools::read_command_line(argc, argv, sim_num, V_INF, AJ, output_name);
 
-  V_INF *= space::unit::kms;
-  AJ *= space::unit::au;
-
   // std::string file_name = output_name + ".txt";
 
   /*auto out_file = space::multiThread::make_thread_safe_fstream(file_name, std::fstream::out);
