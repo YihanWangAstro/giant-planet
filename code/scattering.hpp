@@ -85,8 +85,7 @@ double time_to_pericenter(double u, double v_inf, double b, double start_r) {
   double M = e * sinh(F) - F;
 
   double time_to_pericenter = sqrt(-a * a * a / u) * M;
-
-  return time_to_pericenter;
+  .................. return time_to_pericenter;
 }
 
 template <typename Gen>

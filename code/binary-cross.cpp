@@ -1,6 +1,6 @@
 #include "scattering.hpp"
 
-// double V_DISPER{5};
+double V_DISPER{30 * space::unit::kms};
 double V_INF{5};
 // double M_DWARF{0.2};
 double AJ{1};
@@ -17,7 +17,7 @@ void mono_single(std::string workdir, size_t idx, size_t sim_num, double m_dwarf
   // randomGen::PowerLaw<double>::get(local_thread_gen, -1.3, 0.08, 0.45);
   // double m_dwarf = M_DWARF * space::unit::m_solar;
 
-  double v_inf = V_INF * space::unit::kms;  // V_RATIO * critical_velocity_of_1_plus_2(sun.mass, jupiter.mass, );
+  // double v_inf = V_INF * space::unit::kms;  // V_RATIO * critical_velocity_of_1_plus_2(sun.mass, jupiter.mass, );
 
   double a_j = AJ * space::unit::au;
 
@@ -27,11 +27,13 @@ void mono_single(std::string workdir, size_t idx, size_t sim_num, double m_dwarf
 
   double u_out = space::consts::G * (m_dwarf + m_in);
 
-  double b_max = get_max_b(u_out, v_inf, 5 * a_j);
+  double b_max = 100 * space::unit::au;  // get_max_b(u_out, v_inf, 5 * a_j);
 
   double start_r = a_j * pow(2 * m_dwarf / (DELTA * mu_in), 1.0 / 3);
 
   for (size_t i = 0; i < sim_num; i++) {
+    double v_inf = space::randomGen::Maxwell<double>::get(local_thread_gen, V_DISPER);
+
     Particle sun{unit::m_solar, unit::r_solar}, jupiter{unit::m_jupiter, unit::r_jupiter};
 
     auto jupiter_orbit =
@@ -78,17 +80,11 @@ int main(int argc, char **argv) {
 
   space::tools::read_command_line(argc, argv, sim_num, V_INF, AJ, output_name);
 
-  // std::string file_name = output_name + ".txt";
-
-  /*auto out_file = space::multiThread::make_thread_safe_fstream(file_name, std::fstream::out);
-
-  out_file << std::setprecision(6);*/
-
   size_t thread_num = 80;
 
   double m_dwarf_min = 0.08 * space::unit::m_solar;
 
-  double m_dwarf_max = 0.45 * space::unit::m_solar;
+  double m_dwarf_max = 1 * space::unit::m_solar;
 
   double dm = (m_dwarf_max - m_dwarf_min) / thread_num;
 
