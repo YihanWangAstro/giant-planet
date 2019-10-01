@@ -35,8 +35,7 @@ double get_max_b(double u, double v_inf, double rp) {
   return sqrt(tmp * tmp - u * u / (v2 * v2));
 }
 
-template <typename Gen>
-auto create_incident_orbit(Gen &gen, double u, double v_inf, double b, double w, double i, double phi, double start_r) {
+auto create_incident_orbit(double u, double v_inf, double b, double w, double i, double phi, double start_r) {
   using namespace space;
 
   double a = -u / (v_inf * v_inf);
@@ -101,7 +100,7 @@ auto create_incident_M_star(Gen &gen, double u, double v_inf, double b, double s
 
   double phi = randomGen::Uniform<double>::get(gen, 0, 2 * consts::pi);
 
-  auto [incid_pos, incid_vel] = create_incident_orbit(gen, u, v_inf, b, w, i, phi, start_r);
+  auto [incid_pos, incid_vel] = create_incident_orbit(u, v_inf, b, w, i, phi, start_r);
 
   return std::make_tuple(incid_pos, incid_vel, w, i, phi);
 }
