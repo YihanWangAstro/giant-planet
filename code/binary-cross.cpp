@@ -82,7 +82,7 @@ int main(int argc, char **argv) {
 
   space::tools::read_command_line(argc, argv, sim_num, AS, AJ, output_name);
 
-  size_t thread_num = 1;
+  size_t thread_num = 80;
 
   double m_dwarf_min = 0.08 * space::unit::m_solar;
 
