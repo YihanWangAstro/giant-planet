@@ -12,7 +12,7 @@ void mono_single(std::string workdir, size_t idx, size_t sim_num, double m_dwarf
   std::mt19937 local_thread_gen(rd());
 
   std::fstream out_file{workdir + "_" + std::to_string(idx) + ".txt", std::fstream::out};
-  
+
   double a_j = AJ * space::unit::au;
 
   double m_in = unit::m_solar + unit::m_jupiter;
@@ -55,9 +55,8 @@ void mono_single(std::string workdir, size_t idx, size_t sim_num, double m_dwarf
 
     args.add_stop_condition(end_time);
 
-    args.add_stop_point_operation([&](auto &ptc) {
-      space::display(out_file, i, jupiter_orbit, v_inf, b, w, incl, phi, ptc, "\r\n");
-    });
+    args.add_stop_point_operation(
+        [&](auto &ptc) { space::display(out_file, i, jupiter_orbit, v_inf, b, w, incl, phi, ptc, "\r\n"); });
 
     spacex::SpaceXsim simulator{0, sun, jupiter, star};
 
@@ -72,7 +71,7 @@ int main(int argc, char **argv) {
 
   space::tools::read_command_line(argc, argv, sim_num, AJ, output_name);
 
-  size_t thread_num = 80;
+  size_t thread_num = 40;
 
   double m_dwarf_min = 0.08 * space::unit::m_solar;
 

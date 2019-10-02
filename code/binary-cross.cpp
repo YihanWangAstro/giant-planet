@@ -24,7 +24,7 @@ void mono_binary(std::string workdir, size_t idx, size_t sim_num, double m_dwarf
 
   double u_out = space::consts::G * (m_dwarf + m_in);
 
-  double b_max = 100*space::unit::au;  // get_max_b(u_out, v_inf, 5 * a_j);
+  double b_max = 100 * space::unit::au;  // get_max_b(u_out, v_inf, 5 * a_j);
 
   double start_r = a_j * pow(2 * m_dwarf / (DELTA * mu_in), 1.0 / 3);
 
@@ -82,7 +82,7 @@ int main(int argc, char **argv) {
 
   space::tools::read_command_line(argc, argv, sim_num, AS, AJ, output_name);
 
-  size_t thread_num = 80;
+  size_t thread_num = 40;
 
   double m_dwarf_min = 0.08 * space::unit::m_solar;
 
