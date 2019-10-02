@@ -14,6 +14,8 @@ void mono_binary(std::string workdir, size_t idx, size_t sim_num, double m_dwarf
 
   std::fstream out_file{workdir + "_" + std::to_string(idx) + ".txt", std::fstream::out};
 
+  double v_inf = V_DISPER;  // space::randomGen::Maxwell<double>::get(local_thread_gen, V_DISPER);
+
   double a_j = AJ * space::unit::au;
 
   double a_s = AS * space::unit::au;
@@ -24,13 +26,11 @@ void mono_binary(std::string workdir, size_t idx, size_t sim_num, double m_dwarf
 
   double u_out = space::consts::G * (m_dwarf + m_in);
 
-  double b_max = 100 * space::unit::au;  // get_max_b(u_out, v_inf, 5 * a_j);
+  double b_max = get_max_b(u_out, v_inf, 5 * a_j);
 
   double start_r = a_j * pow(2 * m_dwarf / (DELTA * mu_in), 1.0 / 3);
 
   for (size_t i = 0; i < sim_num; i++) {
-    double v_inf = space::randomGen::Maxwell<double>::get(local_thread_gen, V_DISPER);
-
     Particle sun{unit::m_solar, unit::r_solar}, jupiter{unit::m_jupiter, unit::r_jupiter};
 
     auto jupiter_orbit =
