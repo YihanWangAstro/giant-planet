@@ -1,12 +1,8 @@
 #include "scattering.hpp"
 
 double V_DISPER{30 * space::unit::kms};
-double V_INF{5};
-// double M_DWARF{0.2};
 double AJ{1};
-
 double AS{1};
-
 constexpr double DELTA{1e-4};
 
 using namespace space::orbit;
@@ -17,10 +13,6 @@ void mono_binary(std::string workdir, size_t idx, size_t sim_num, double m_dwarf
   std::mt19937 local_thread_gen(rd());
 
   std::fstream out_file{workdir + "_" + std::to_string(idx) + ".txt", std::fstream::out};
-  // randomGen::PowerLaw<double>::get(local_thread_gen, -1.3, 0.08, 0.45);
-  // double m_dwarf = M_DWARF * space::unit::m_solar;
-
-  // double v_inf = V_INF * space::unit::kms;  // V_RATIO * critical_velocity_of_1_plus_2(sun.mass, jupiter.mass, );
 
   double a_j = AJ * space::unit::au;
 
@@ -32,7 +24,7 @@ void mono_binary(std::string workdir, size_t idx, size_t sim_num, double m_dwarf
 
   double u_out = space::consts::G * (m_dwarf + m_in);
 
-  double b_max = 100 * space::unit::au;  // get_max_b(u_out, v_inf, 5 * a_j);
+  double b_max = 2*space::unit::pc;  // get_max_b(u_out, v_inf, 5 * a_j);
 
   double start_r = a_j * pow(2 * m_dwarf / (DELTA * mu_in), 1.0 / 3);
 
@@ -74,8 +66,6 @@ void mono_binary(std::string workdir, size_t idx, size_t sim_num, double m_dwarf
     args.add_stop_condition(end_time);
 
     args.add_stop_point_operation([&](auto &ptc) {
-      // out_file << PACK(i, ' ', jupiter_orbit, ' ', v_inf, ' ', b, ' ', w, ' ', incl, ' ', phi, ' ', ptc, ' ',
-      // "\r\n");
       space::display(out_file, i, jupiter_orbit, v_inf, b, w, incl, phi, ptc, binary_orbit, "\r\n");
     });
 
@@ -105,14 +95,12 @@ int main(int argc, char **argv) {
   std::vector<std::thread> threads;
 
   for (size_t i = 0; i < thread_num; ++i) {
-    threads.emplace_back(std::thread{mono_single, output_name, i, sim_num, m_dwarf});
+    threads.emplace_back(std::thread{mono_binary, output_name, i, sim_num, m_dwarf});
     m_dwarf += dm;
   }
 
   for (auto &th : threads) {
     th.join();
   }
-  // space::multiThread::auto_multi_thread(mono_single, out_file, sim_num);
-
   return 0;
 }
