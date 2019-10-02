@@ -3,7 +3,7 @@
 double V_DISPER{30 * space::unit::kms};
 double AJ{1};
 double AS{1};
-constexpr double DELTA{1e-4};
+constexpr double DELTA{1e-5};
 
 using namespace space::orbit;
 
@@ -82,7 +82,7 @@ int main(int argc, char **argv) {
 
   space::tools::read_command_line(argc, argv, sim_num, AS, AJ, output_name);
 
-  size_t thread_num = 80;
+  size_t thread_num = 1;
 
   double m_dwarf_min = 0.08 * space::unit::m_solar;
 
