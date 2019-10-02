@@ -24,7 +24,7 @@ void mono_binary(std::string workdir, size_t idx, size_t sim_num, double m_dwarf
 
   double u_out = space::consts::G * (m_dwarf + m_in);
 
-  double b_max = 2*space::unit::pc;  // get_max_b(u_out, v_inf, 5 * a_j);
+  double b_max = 100*space::unit::au;  // get_max_b(u_out, v_inf, 5 * a_j);
 
   double start_r = a_j * pow(2 * m_dwarf / (DELTA * mu_in), 1.0 / 3);
 
