@@ -26,7 +26,7 @@ void mono_binary(std::string workdir, size_t idx, size_t sim_num, double m_dwarf
 
   double u_out = space::consts::G * (m_dwarf + m_in);
 
-  double b_max = get_max_b(u_out, V_DISPER / 5, 5 * a_j);
+  double b_max = a_s + get_max_b(u_out, V_DISPER / 5, 5 * a_j);
 
   double start_r = a_j * pow(2 * m_dwarf / (DELTA * mu_in), 1.0 / 3);
 
@@ -47,7 +47,7 @@ void mono_binary(std::string workdir, size_t idx, size_t sim_num, double m_dwarf
     auto [incid_pos, incid_vel, w, incl, phi] = create_incident_M_star(local_thread_gen, u_out, v_inf, b, start_r);
 
     auto binary_orbit =
-        Kepler{0.5 * m_dwarf, 0.5 * m_dwarf, semi_latus_rectum(a_s, 0.0), 0.0, 0.0, 0.0, ISOTHERMAL, 0.0};
+        Kepler{0.5 * m_dwarf, 0.5 * m_dwarf, semi_latus_rectum(a_s, 0.0), 0.0, ISOTHERMAL, ISOTHERMAL, ISOTHERMAL, 0.0};
 
     Particle star1{0.5 * m_dwarf, pow(0.5 * m_dwarf, 1.0 / 3) * unit::r_solar};
 
