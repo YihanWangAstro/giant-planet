@@ -68,7 +68,7 @@ void mono_binary(std::string workdir, size_t idx, size_t sim_num, double m_dwarf
     if (v_inf > v_c) {
       end_time = 2 * time_to_pericenter(u_out, v_inf, b, start_r);
     } else {
-      end_time = 20 * time_to_pericenter(u_out, v_inf, b_max, start_r);
+      end_time = 20 * time_to_pericenter(u_out, v_inf, b, start_r);
     }
 
     spacex::SpaceXsim::RunArgs args;
