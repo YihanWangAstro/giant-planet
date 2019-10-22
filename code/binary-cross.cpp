@@ -1,8 +1,8 @@
 #include "scattering.hpp"
 
-double V_DISPER{30 * space::unit::kms};
-double AJ{1};
-double AS{1};
+double V_DISPER{5 * space::unit::kms};
+double AJ{5};
+double AS{5};
 constexpr double DELTA{1e-5};
 
 using namespace space::orbit;
@@ -18,6 +18,8 @@ void mono_binary(std::string workdir, size_t idx, size_t sim_num, double m_dwarf
 
   double a_j = AJ * space::unit::au;
 
+  double v_inf = V_DISPER * space::unit::kms;
+
   double a_s = AS * space::unit::au;
 
   double m_in = unit::m_solar + unit::m_jupiter;
@@ -26,13 +28,15 @@ void mono_binary(std::string workdir, size_t idx, size_t sim_num, double m_dwarf
 
   double u_out = space::consts::G * (m_dwarf + m_in);
 
-  double b_max = get_max_b(u_out, V_DISPER / 5, 5 * (a_j + a_s));
+  double v_c = critical_velocity_of_2_plus_2(unit::m_solar, unit::m_jupiter, 0.5 * m_dwarf, 0.5 * m_dwarf, a_j, a_s);
+
+  // double b_max = get_max_b(u_out, V_DISPER / 5, 5 * (a_j + a_s));
+
+  double b_max = get_b_max(v_c, v_inf, std::max(a_j, a_s));
 
   double start_r = a_j * pow(2 * m_dwarf / (DELTA * mu_in), 1.0 / 3);
 
   for (size_t i = 0; i < sim_num; i++) {
-    double v_inf = space::randomGen::Maxwell<double>::get(local_thread_gen, V_DISPER);
-
     Particle sun{unit::m_solar, unit::r_solar}, jupiter{unit::m_jupiter, unit::r_jupiter};
 
     auto jupiter_orbit =
@@ -59,7 +63,13 @@ void mono_binary(std::string workdir, size_t idx, size_t sim_num, double m_dwarf
 
     move_to_com_coord(sun, jupiter, star1, star2);
 
-    double end_time = 2 * time_to_pericenter(u_out, v_inf, b, start_r);
+    double end_time = 0;
+
+    if (v_inf > v_c) {
+      end_time = 2 * time_to_pericenter(u_out, v_inf, b, start_r);
+    } else {
+      end_time = 20 * time_to_pericenter(u_out, v_inf, b_max, start_r);
+    }
 
     spacex::SpaceXsim::RunArgs args;
 
@@ -82,25 +92,22 @@ int main(int argc, char **argv) {
 
   size_t sim_num;
 
-  space::tools::read_command_line(argc, argv, sim_num, AS, AJ, output_name);
+  space::tools::read_command_line(argc, argv, sim_num, V_DISPER, output_name);
 
-  size_t thread_num = 80;
+  size_t thread_num = (std::thread::hardware_concurrency() > 1) ? std::thread::hardware_concurrency() : 1;
 
-  size_t parallel_nun = 4;
+  /*double m_dwarf_min = 0.08 * space::unit::m_solar;
 
-  double m_dwarf_min = 0.08 * space::unit::m_solar;
+double m_dwarf_max = 1 * space::unit::m_solar;
 
-  double m_dwarf_max = 1 * space::unit::m_solar;
+double dm = (m_dwarf_max - m_dwarf_min) / (thread_num / parallel_nun);*/
 
-  double dm = (m_dwarf_max - m_dwarf_min) / (thread_num / parallel_nun);
-
-  double m_dwarf = m_dwarf_min;
+  double m_dwarf = 0.2 * space::unit::m_solar;
 
   std::vector<std::thread> threads;
 
   for (size_t i = 0; i < thread_num; ++i) {
     threads.emplace_back(std::thread{mono_binary, output_name, i, sim_num, m_dwarf});
-    if (i % 4 == 3) m_dwarf += dm;
   }
 
   for (auto &th : threads) {

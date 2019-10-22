@@ -8,7 +8,7 @@
 #include "SpaceHub/src/tools/timer.hpp"
 #include "SpaceX/SpaceHubWrapper.hpp"
 
-using ConFile = space::multiThread::ConcurrentFile;
+using ConFile = space::multi_thread::ConcurrentFile;
 using Particle = spacex::SpaceXsim::Particle;
 using ParticleSys = spacex::SpaceXsim::RunArgs::ParticleSys;
 
@@ -29,11 +29,22 @@ inline double critical_velocity_of_1_plus_2(double m1, double m2, double m3, dou
   return sqrt(space::consts::G / mu_out * m1 * m2 / a);
 }
 
+inline double critical_velocity_of_2_plus_2(double m1, double m2, double m3, double m4, double a_in, double a_out) {
+  double m_in = m1 + m2;
+  double m_out = m3 + m4;
+
+  double mu_out = m_in * m_out / (m_in + m_out);
+
+  return sqrt(space::consts::G / mu_out * (m1 * m2 / a_in + m3 * m4 / a_out));
+}
+/*
 double get_max_b(double u, double v_inf, double rp) {
   double v2 = v_inf * v_inf;
   double tmp = u / v2 + rp;
   return sqrt(tmp * tmp - u * u / (v2 * v2));
-}
+}*/
+
+double get_b_max(double v_c, double v_inf, double a_max) { return a_max * (4 * v_c / v_inf + 3); }
 
 auto create_incident_orbit(double u, double v_inf, double b, double w, double i, double phi, double start_r) {
   using namespace space;
