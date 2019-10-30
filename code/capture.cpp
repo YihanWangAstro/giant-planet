@@ -1,13 +1,8 @@
-#include "SpaceHub/src/orbits/orbits.hpp"
-#include "SpaceHub/src/orbits/particle-manip.hpp"
-#include "SpaceHub/src/scattering/cross-section.hpp"
-
-#include "SpaceHub/src/dev-tools.hpp"
 #include "SpaceHub/src/macros.hpp"
 #include "SpaceHub/src/multi-thread/multi-thread.hpp"
-
+#include "SpaceHub/src/scattering/cross-section.hpp"
+#include "SpaceHub/src/stellar/stellar.hpp"
 #include "SpaceHub/src/tools/config-reader.hpp"
-#include "SpaceHub/src/tools/timer.hpp"
 #include "SpaceX/SpaceHubWrapper.hpp"
 
 using ConFile = space::multi_thread::ConcurrentFile;
@@ -27,29 +22,27 @@ auto collision = [](auto &ptc) -> bool {
   return false;
 };
 
-void mono_single(std::string workdir, size_t idx, size_t sim_num, double m_dwarf) {
-  std::fstream out_file{workdir + "_" + std::to_string(idx) + ".txt", std::fstream::out};
-
-  double a_j = 1;
+void mono_single(size_t thread_idx, std::string workdir, size_t sim_num, double a_j, double v_inf) {
+  std::fstream out_file{workdir + "_" + std::to_string(thread_idx) + ".txt", std::fstream::out};
   double e_j = 0;
-  double m_d = 0.2;
-  double r_d = 1;
-  double v_inf = 1;
-  double delta = 1e-5;
+  double m_d = 0.2 * unit::m_solar;
+  double r_d = stellar::stellar_radius(stellar::StarType::STAR, m_d);
+  double const delta = 1e-5;
+
   for (size_t i = 0; i < sim_num; ++i) {
-    Particle sun{unit::m_solar, unit::r_solar}, jupiter{unit::m_jupiter, unit::r_jupiter}, m_dwarf{m_d, r_d};
+    Particle sun{unit::m_solar, unit::r_solar}, jupiter{unit::m_jupiter, unit::r_jupiter}, dwarf{m_d, r_d};
 
     auto jupiter_orbit = EllipOrbit{sun.mass, jupiter.mass, a_j, e_j, isotherm, isotherm, isotherm, isotherm};
 
     move_particles(jupiter_orbit, jupiter);
 
-    auto in_orbit = scattering::incident_orbit(cluster(sun, jupiter), m_dwarf, v_inf, 1e-5);
+    auto in_orbit = scattering::incident_orbit(cluster(sun, jupiter), dwarf, v_inf, delta);
 
-    move_particles(in_orbit, m_dwarf);
+    move_particles(in_orbit, dwarf);
 
-    move_to_COM_frame(sun, jupiter, m_dwarf);
+    move_to_COM_frame(sun, jupiter, dwarf);
 
-    double end_time = time_to_periapsis(cluster(sun, jupiter), m_dwarf);
+    double end_time = ((E_tot(sun, jupiter, dwarf) > 0) ? 2.0 : 20.0) * time_to_periapsis(cluster(sun, jupiter), dwarf);
 
     spacex::SpaceXsim::RunArgs args;
 
@@ -60,39 +53,28 @@ void mono_single(std::string workdir, size_t idx, size_t sim_num, double m_dwarf
     args.add_stop_point_operation(
         [&](auto &ptc) { space::display(out_file, i, jupiter_orbit, v_inf, in_orbit, ptc, "\r\n"); });
 
-    spacex::SpaceXsim simulator{0, sun, jupiter, m_dwarf};
+    spacex::SpaceXsim simulator{0, sun, jupiter, dwarf};
 
     simulator.run(args);
   }
+}
 
-  int main(int argc, char **argv) {
-    Particle sun{unit::m_solar, unit::r_solar}, jupiter{unit::m_jupiter, unit::r_jupiter};
+int main(int argc, char **argv) {
+  std::string output_name;
 
-    auto x = cluster(sun, jupiter);
+  size_t sim_num;
 
-    if constexpr (is_ranges_v<decltype(x)>) {
-      std::cout << "is container";
-    }
-    std::cout << x;
+  double a_j{5};
 
-    std::string output_name;
+  double v_inf{1};
 
-    size_t sim_num;
+  tools::read_command_line(argc, argv, sim_num, output_name, a_j, v_inf);
 
-    space::tools::read_command_line(argc, argv, sim_num, V_DISPER, output_name);
+  a_j *= unit::au;
 
-    size_t thread_num = (std::thread::hardware_concurrency() > 1) ? std::thread::hardware_concurrency() : 1;
+  v_inf *= unit::kms;
 
-    double m_dwarf = 0.2 * space::unit::m_solar;
+  multi_thread::auto_indexed_multi_thread(mono_single, output_name, sim_num, a_j, v_inf);
 
-    std::vector<std::thread> threads;
-
-    for (size_t i = 0; i < thread_num; ++i) {
-      threads.emplace_back(std::thread{mono_single, output_name, i, sim_num, m_dwarf});
-    }
-
-    for (auto &th : threads) {
-      th.join();
-    }
-    return 0;
-  }
+  return 0;
+}
