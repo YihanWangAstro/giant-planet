@@ -36,6 +36,8 @@ void mono_single(size_t thread_idx, std::string workdir, size_t sim_num, double 
 
     move_particles(jupiter_orbit, jupiter);
 
+    move_to_COM_frame(sun, jupiter);
+
     auto in_orbit = scattering::incident_orbit(cluster(sun, jupiter), dwarf, v_inf, delta);
 
     move_particles(in_orbit, dwarf);
@@ -44,9 +46,9 @@ void mono_single(size_t thread_idx, std::string workdir, size_t sim_num, double 
 
     double end_time = ((E_tot(sun, jupiter, dwarf) > 0) ? 2.0 : 20.0) * time_to_periapsis(cluster(sun, jupiter), dwarf);
 
-    /*out_file << in_orbit << ' ' << end_time / unit::year << '\n';
+    // std::cout << E_tot(sun, jupiter, dwarf) << ' ' << in_orbit << ' ' << end_time / unit::year << '\n';
 
-    continue;*/
+    // continue;
 
     spacex::SpaceXsim::RunArgs args;
 
