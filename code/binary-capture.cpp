@@ -28,23 +28,29 @@ void mono_single(size_t thread_idx, std::string workdir, size_t sim_num, double 
   double m_d = 0.2_Ms;
   double r_d = stellar::stellar_radius(stellar::StarType::STAR, m_d);
   double const delta = 1e-5;
-
+  double a_s = 1_AU;
+  double e_s = 0;
   for (size_t i = 0; i < sim_num; ++i) {
-    Particle sun{1_Ms, 1_Rs}, jupiter{1_Mj, 1_Rj}, dwarf{m_d, r_d};
+    Particle sun1{1_Ms, 1_Rs}, sun2{1_Ms, 1_Rs}, jupiter{1_Mj, 1_Rj}, dwarf{m_d, r_d};
 
-    auto jupiter_orbit = EllipOrbit{sun.mass, jupiter.mass, a_j, e_j, isotherm, isotherm, isotherm, isotherm};
+    auto jupiter_orbit = EllipOrbit{sun1.mass, jupiter.mass, a_j, e_j, isotherm, isotherm, isotherm, isotherm};
 
     move_particles(jupiter_orbit, jupiter);
 
-    move_to_COM_frame(sun, jupiter);
+    auto solar_orbit = EllipOrbit{sun1.mass, sun2.mass, a_s, e_s, isotherm, isotherm, isotherm, isotherm};
 
-    auto in_orbit = scattering::incident_orbit(cluster(sun, jupiter), dwarf, v_inf, delta);
+    move_particles(solar_orbit, sun1, jupiter);
+
+    move_to_COM_frame(sun1, sun2, jupiter);
+
+    auto in_orbit = scattering::incident_orbit(cluster(sun1, sun2, jupiter), dwarf, v_inf, delta);
 
     move_particles(in_orbit, dwarf);
 
-    move_to_COM_frame(sun, jupiter, dwarf);
+    move_to_COM_frame(sun1, sun2, jupiter, dwarf);
 
-    double end_time = ((E_tot(sun, jupiter, dwarf) > 0) ? 2.0 : 20.0) * time_to_periapsis(cluster(sun, jupiter), dwarf);
+    double end_time =
+        ((E_tot(sun1, sun2, jupiter, dwarf) > 0) ? 2.0 : 20.0) * time_to_periapsis(cluster(sun1, sun2, jupiter), dwarf);
 
     spacex::SpaceXsim::RunArgs args;
 
@@ -55,7 +61,7 @@ void mono_single(size_t thread_idx, std::string workdir, size_t sim_num, double 
     args.add_stop_point_operation(
         [&](auto &ptc) { space::display(out_file, i, jupiter_orbit, v_inf, in_orbit, ptc, "\r\n"); });
 
-    spacex::SpaceXsim simulator{0, sun, jupiter, dwarf};
+    spacex::SpaceXsim simulator{0, sun1, sun2, jupiter, dwarf};
 
     simulator.run(args);
   }

@@ -1,4 +1,4 @@
-all: capture
+all: capture binary-capture
 
 VPATH =${MY_REPO_PATH}/SpaceX:${MY_REPO_PATH}/SpaceHub/src/
 CXX = g++
@@ -15,6 +15,10 @@ INCL = dynamicSystem.h macros.h chain.h\
 
 capture : $(OBJS) capture.o
 	$(CXX) -std=c++17 -O3 -o capture $(OBJS) capture.o -pthread
+
+binary-capture : $(OBJS) binary-capture.o
+	$(CXX) -std=c++17 -O3 -o binary-capture $(OBJS) binary-capture.o -pthread
+
 #binary-single : $(OBJS) single-cross.o
 #	$(CXX) -std=c++17 -O3 -o binary-single $(OBJS) single-cross.o -pthread
 	
