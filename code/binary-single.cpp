@@ -36,7 +36,8 @@ void binary_single(size_t thread_idx, std::string workdir, size_t sim_num, doubl
 
     move_particles(jupiter_orbit, jupiter);
 
-    auto solar_orbit = EllipOrbit{sun1.mass, sun2.mass, a_s, e_s, isotherm, isotherm, isotherm, isotherm};
+    auto solar_orbit =
+        EllipOrbit{sun1.mass + jupiter.mass, sun2.mass, a_s, e_s, isotherm, isotherm, isotherm, isotherm};
 
     move_particles(solar_orbit, sun1, jupiter);
 
