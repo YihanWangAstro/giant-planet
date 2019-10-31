@@ -1,4 +1,4 @@
-all: capture binary-capture
+all: single-single single-binary binary-single binary-binary
 
 VPATH =${MY_REPO_PATH}/SpaceX:${MY_REPO_PATH}/SpaceHub/src/
 CXX = g++
@@ -13,19 +13,19 @@ INCL = dynamicSystem.h macros.h chain.h\
 	integrator.h BSIterator.h errhand.h InitFileCreator.h\
 	seqIterator.h odeIterator.h vector3d.h tools.h
 
-capture : $(OBJS) capture.o
-	$(CXX) -std=c++17 -O3 -o capture $(OBJS) capture.o -pthread
+single-single : $(OBJS) single-single.o
+	$(CXX) -std=c++17 -O3 -o single-single.ex $(OBJS) single-single.o -pthread
 
-binary-capture : $(OBJS) binary-capture.o
-	$(CXX) -std=c++17 -O3 -o binary-capture $(OBJS) binary-capture.o -pthread
+binary-single : $(OBJS) binary-single.o
+	$(CXX) -std=c++17 -O3 -o binary-single.ex $(OBJS) binary-single.o -pthread
 
-#binary-single : $(OBJS) single-cross.o
-#	$(CXX) -std=c++17 -O3 -o binary-single $(OBJS) single-cross.o -pthread
-	
-#binary-binary : $(OBJS) binary-cross.o
-#	$(CXX) -std=c++17 -O3 -o binary-binary $(OBJS) binary-cross.o -pthread
-	
+single-binary : $(OBJS) single-binary.o
+	$(CXX) -std=c++17 -O3 -o single-binary.ex $(OBJS) single-binary.o -pthread
+
+binary-binary : $(OBJS) binary-binary.o
+	$(CXX) -std=c++17 -O3 -o binary-binary.ex $(OBJS) binary-binary.o -pthread
+
 $(OBJS) : $(INCL)
 .PHONY : clean	
 clean:
-	-rm $(OBJS) *.o 
+	-rm $(OBJS) *.o *.ex
