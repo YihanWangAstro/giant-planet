@@ -22,7 +22,7 @@ auto collision = [](auto &ptc) -> bool {
   return false;
 };
 
-void mono_single(size_t thread_idx, std::string workdir, size_t sim_num, double a_j, double v_inf) {
+void single_single(size_t thread_idx, std::string workdir, size_t sim_num, double a_j, double v_inf) {
   std::fstream out_file{workdir + "_" + std::to_string(thread_idx) + ".txt", std::fstream::out};
   double e_j = 0;
   double m_d = 0.2_Ms;
@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
 
   auto th_num = multi_thread::machine_thread_num;
 
-  multi_thread::indexed_multi_thread(th_num, mono_single, output_name, sim_num, a_j, v_inf);
+  multi_thread::indexed_multi_thread(th_num, single_single, output_name, sim_num, a_j, v_inf);
 
   return 0;
 }
