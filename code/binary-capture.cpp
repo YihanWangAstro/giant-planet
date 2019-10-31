@@ -22,13 +22,12 @@ auto collision = [](auto &ptc) -> bool {
   return false;
 };
 
-void mono_single(size_t thread_idx, std::string workdir, size_t sim_num, double a_j, double v_inf) {
+void mono_binary(size_t thread_idx, std::string workdir, size_t sim_num, double a_j, double v_inf, double a_s) {
   std::fstream out_file{workdir + "_" + std::to_string(thread_idx) + ".txt", std::fstream::out};
   double e_j = 0;
   double m_d = 0.2_Ms;
   double r_d = stellar::stellar_radius(stellar::StarType::STAR, m_d);
   double const delta = 1e-5;
-  double a_s = 1_AU;
   double e_s = 0;
   for (size_t i = 0; i < sim_num; ++i) {
     Particle sun1{1_Ms, 1_Rs}, sun2{1_Ms, 1_Rs}, jupiter{1_Mj, 1_Rj}, dwarf{m_d, r_d};
@@ -68,11 +67,19 @@ void mono_single(size_t thread_idx, std::string workdir, size_t sim_num, double 
 }
 
 int main(int argc, char **argv) {
-  READ_CMD_LINE(argc, argv, sim_num, output_name, a_j, v_inf);
+  size_t sim_num;
+  std::string output_name;
+  double a_j, v_inf, a_s;
+
+  tools::read_command_line(argc, argv, sim_num, output_name, a_j, v_inf, a_s);
+
+  a_j *= unit::AU;
+  a_s *= unit::AU;
+  v_inf *= unit::kms;
 
   auto th_num = multi_thread::machine_thread_num;
 
-  multi_thread::indexed_multi_thread(th_num, mono_single, output_name, sim_num, a_j, v_inf);
+  multi_thread::indexed_multi_thread(th_num, mono_binary, output_name, sim_num, a_j, v_inf, a_s);
 
   return 0;
 }

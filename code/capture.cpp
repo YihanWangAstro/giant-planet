@@ -62,7 +62,14 @@ void mono_single(size_t thread_idx, std::string workdir, size_t sim_num, double 
 }
 
 int main(int argc, char **argv) {
-  READ_CMD_LINE(argc, argv, sim_num, output_name, a_j, v_inf);
+  size_t sim_num;
+  std::string output_name;
+  double a_j, v_inf;
+
+  tools::read_command_line(argc, argv, sim_num, output_name, a_j, v_inf);
+
+  a_j *= unit::AU;
+  v_inf *= unit::kms;
 
   auto th_num = multi_thread::machine_thread_num;
 
